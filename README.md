@@ -41,7 +41,8 @@ solcard/
 │   │       │   ├── solana.ts   # RPC connection, balance + stake queries
 │   │       │   └── escrow.ts   # In-memory escrow ledger (stub)
 │   │       ├── middleware/
-│   │       │   └── logger.ts   # Request logging
+│   │       │   ├── logger.ts   # Request logging
+│   │       │   └── marqetaSignatureVerify.ts # HMAC signature validation
 │   │       ├── types/
 │   │       │   └── index.ts    # Shared TypeScript interfaces
 │   │       └── __tests__/      # Bun test suite
@@ -103,11 +104,12 @@ cp .env.example .env
 
 See `.env.example` for the full list. Key variables:
 
-| Variable | Description |
-| --- | --- |
-| `SOLANA_RPC_URL` | Solana RPC endpoint (defaults to `https://api.mainnet-beta.solana.com`) |
-| `CORS_ORIGIN` | Allowed origin for the API (defaults to `http://localhost:5173`) |
-| `PORT` | API port (defaults to `3001`) |
+| Variable | Description | Required |
+| --- | --- | --- |
+| `SOLANA_RPC_URL` | Solana RPC endpoint (defaults to `https://api.mainnet-beta.solana.com`) | No |
+| `CORS_ORIGIN` | Allowed origin for the API (defaults to `http://localhost:5173`) | No |
+| `PORT` | API port (defaults to `3001`) | No |
+| `MARQETA_WEBHOOK_SECRET` | HMAC-SHA256 secret for verifying Marqeta webhook signatures | **Yes** |
 
 ### Development
 
@@ -181,7 +183,13 @@ Queries the Solana RPC for native SOL balance and active stake account balances.
 
 Called by Marqeta when a card is swiped. Must respond within ~5 seconds. Debits the in-memory escrow if sufficient funds exist and returns the approved amount.
 
-> **Note:** Marqeta webhook signature validation (HMAC check) and background escrow replenishment job enqueueing are both planned but not yet implemented.
+All requests to this endpoint **must include a valid `X-Marqeta-Signature` header** containing an HMAC-SHA256 signature of the request body, computed using the `MARQETA_WEBHOOK_SECRET`. Requests without a valid signature receive a `401 Unauthorized` response and the transaction is not processed.
+
+**Request headers**
+
+| Header | Description |
+| --- | --- |
+| `X-Marqeta-Signature` | HMAC-SHA256 signature of the request body as a hex-encoded string (required) |
 
 **Request body**
 
@@ -205,6 +213,7 @@ Called by Marqeta when a card is swiped. Must respond within ~5 seconds. Debits 
 | Status | Meaning |
 | --- | --- |
 | `200` | Approved — escrow debited, response body contains `jit_funding` object |
+| `401` | Unauthorized — signature validation failed or header missing |
 | `402` | Declined — insufficient escrow balance |
 
 **200 response body**
@@ -231,6 +240,23 @@ The escrow module (`packages/api/src/lib/escrow.ts`) is an in-memory stub with a
 | `_resetForTesting()` | Resets balance to initial state; only called from tests |
 
 A PostgreSQL-backed double-entry ledger is planned to replace this in production.
+
+## Security
+
+### Marqeta Webhook Signature Validation
+
+All Marqeta webhook requests are verified using HMAC-SHA256 signatures. The API server:
+
+1. **Requires `MARQETA_WEBHOOK_SECRET`** at startup — the server will refuse to start if this environment variable is not set.
+2. **Validates every incoming Marqeta webhook** — the `X-Marqeta-Signature` header is extracted and compared against a timing-safe HMAC-SHA256 hash of the raw request body.
+3. **Rejects unsigned or forged requests immediately** — returns `401 Unauthorized` without processing the transaction, preventing unauthorized escrow debits.
+4. **Logs all validation failures** — includes source IP and timestamp for audit and security monitoring.
+
+The signature validation middleware is applied exclusively to `POST /webhooks/jit-funding` and does not affect other API endpoints.
+
+### Non-Custodial Design
+
+SolCard never holds user private keys. All wallet operations and crypto-to-fiat swaps are initiated by users and signed client-side. The API only orchestrates the flow and maintains the escrow ledger.
 
 ## CI/CD
 

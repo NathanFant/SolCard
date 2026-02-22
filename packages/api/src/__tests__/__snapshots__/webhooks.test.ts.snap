@@ -1,6 +1,6 @@
 // Bun Snapshot v1, https://bun.sh/docs/test/snapshots
 
-exports[`POST /jit-funding response shape matches snapshot 1`] = `
+exports[`POST /jit-funding response shape matches snapshot with valid signature 1`] = `
 {
   "jit_funding": {
     "amount": 49.99,
