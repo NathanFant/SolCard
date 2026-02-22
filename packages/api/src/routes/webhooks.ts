@@ -5,13 +5,8 @@ import type { JitFundingRequest, JitFundingResponse } from "../types/index.js";
 
 const webhooks = new Hono();
 
-// Validate that the Marqeta webhook secret is configured
-const marqetaSecret = process.env.MARQETA_WEBHOOK_SECRET;
-if (!marqetaSecret) {
-  throw new Error(
-    "MARQETA_WEBHOOK_SECRET environment variable is required but not set"
-  );
-}
+// Get the webhook secret from environment (validated at server startup in index.ts)
+const marqetaSecret = process.env.MARQETA_WEBHOOK_SECRET || "";
 
 // Apply signature verification middleware only to the JIT funding route
 webhooks.post(

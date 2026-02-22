@@ -1,0 +1,3 @@
+[test]
+# Environment variables for tests
+env = ["MARQETA_WEBHOOK_SECRET=test_webhook_secret_for_ci"]

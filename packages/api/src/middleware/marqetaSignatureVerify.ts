@@ -20,6 +20,34 @@ export interface SignatureVerifyOptions {
   secret: string;
 }
 
+/**
+ * Convert a hex string to a Uint8Array.
+ */
+function hexToBytes(hex: string): Uint8Array {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+  }
+  return bytes;
+}
+
+/**
+ * Timing-safe comparison of two byte arrays.
+ * Returns true only if both arrays are the same length and all bytes match.
+ */
+function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a[i] ^ b[i];
+  }
+
+  return result === 0;
+}
+
 export function marqetaSignatureVerify(
   options: SignatureVerifyOptions
 ): MiddlewareHandler {
@@ -78,20 +106,22 @@ export function marqetaSignatureVerify(
       return c.json({ error: "Unauthorized" }, 401);
     }
 
-    // Timing-safe comparison
-    const expectedBuf = Buffer.from(computed, "hex");
-    const receivedBuf = Buffer.from(signature, "hex");
-
-    let isValid = false;
+    // Parse received signature from hex string
+    let receivedBytes: Uint8Array;
     try {
-      // crypto.timingSafeEqual throws if lengths differ; we check first
-      if (expectedBuf.length === receivedBuf.length) {
-        isValid = Buffer.from(expectedBuf).equals(receivedBuf);
-      }
+      receivedBytes = hexToBytes(signature);
     } catch {
-      // Lengths differ or comparison failed
-      isValid = false;
+      console.warn(
+        `[marqeta-verify] Signature mismatch; source: ${c.req.header("x-forwarded-for") || c.req.header("host") || "unknown"}; timestamp: ${new Date().toISOString()}`
+      );
+      return c.json({ error: "Unauthorized" }, 401);
     }
+
+    // Parse computed signature from hex string
+    const expectedBytes = hexToBytes(computed);
+
+    // Timing-safe comparison
+    const isValid = timingSafeEqual(expectedBytes, receivedBytes);
 
     if (!isValid) {
       console.warn(
