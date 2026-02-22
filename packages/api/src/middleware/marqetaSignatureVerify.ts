@@ -51,7 +51,11 @@ function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
 
   let result = 0;
   for (let i = 0; i < a.length; i++) {
-    result |= a[i] ^ b[i];
+    const aVal = a[i];
+    const bVal = b[i];
+    if (aVal !== undefined && bVal !== undefined) {
+      result |= aVal ^ bVal;
+    }
   }
 
   return result === 0;
