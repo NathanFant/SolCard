@@ -22,7 +22,8 @@ export PATH="$HOME/.bun/bin:$PATH"
 "$ROOT/ci/pre-commit.sh" || exit 1
 python3 "$ROOT/scripts/update_license_year.py"
 python3 "$ROOT/scripts/update_readme.py"
-git add "$ROOT/LICENSE" "$ROOT/README.md"
+python3 "$ROOT/scripts/update_changelog.py"
+git add "$ROOT/LICENSE" "$ROOT/README.md" "$ROOT/CHANGELOG.md"
 """
 
 
