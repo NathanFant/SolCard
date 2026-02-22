@@ -28,7 +28,7 @@ printf "\\033[32mAll tests passed.\\033[0m\\n"
 
 # 2. Type check (blocks commit on failure)
 printf "\\033[1mType checking...\\033[0m\\n"
-bun --cwd "$ROOT" run lint
+bun run --cwd "$ROOT" lint
 if [ $? -ne 0 ]; then
   printf "\\033[31mType check failed - commit aborted.\\033[0m\\n"
   exit 1

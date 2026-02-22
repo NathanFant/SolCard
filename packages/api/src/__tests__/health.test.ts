@@ -9,13 +9,13 @@ describe("GET /health", () => {
 
   it("returns status ok", async () => {
     const res = await health.request("/");
-    const body = await res.json<{ status: string; timestamp: string }>();
+    const body = await res.json() as unknown as { status: string; timestamp: string };
     expect(body.status).toBe("ok");
   });
 
   it("returns a valid ISO timestamp", async () => {
     const res = await health.request("/");
-    const body = await res.json<{ status: string; timestamp: string }>();
+    const body = await res.json() as unknown as { status: string; timestamp: string };
     expect(new Date(body.timestamp).toString()).not.toBe("Invalid Date");
   });
 });

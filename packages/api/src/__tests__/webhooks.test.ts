@@ -31,13 +31,13 @@ describe("POST /jit-funding", () => {
 
   it("returns the transaction token in the response", async () => {
     const res = await webhooks.request(makeRequest(basePayload));
-    const body = await res.json<JitFundingResponse>();
+    const body = await res.json() as unknown as JitFundingResponse;
     expect(body.jit_funding.token).toBe("txn_test_001");
   });
 
   it("echoes back the authorized amount", async () => {
     const res = await webhooks.request(makeRequest(basePayload));
-    const body = await res.json<JitFundingResponse>();
+    const body = await res.json() as unknown as JitFundingResponse;
     expect(body.jit_funding.amount).toBe(49.99);
   });
 
