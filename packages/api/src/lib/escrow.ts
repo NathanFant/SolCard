@@ -18,7 +18,13 @@ export interface EscrowLedgerEntry {
 }
 
 // TODO: replace with Postgres-backed ledger
-const mockEscrowBalance = { usd: 10_000.0 };
+const INITIAL_BALANCE = 10_000.0;
+const mockEscrowBalance = { usd: INITIAL_BALANCE };
+
+/** Reset to initial state — only for use in tests. */
+export function _resetForTesting(): void {
+  mockEscrowBalance.usd = INITIAL_BALANCE;
+}
 
 export async function getEscrowBalance(): Promise<number> {
   return mockEscrowBalance.usd;

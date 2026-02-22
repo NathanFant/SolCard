@@ -14,8 +14,20 @@ HOOKS_DIR = REPO_ROOT / ".git" / "hooks"
 
 PRE_COMMIT_HOOK = """\
 #!/bin/sh
-# Auto-update copyright year in LICENSE on every commit.
-python3 "$(git rev-parse --show-toplevel)/scripts/update_license_year.py"
+ROOT="$(git rev-parse --show-toplevel)"
+export PATH="$HOME/.bun/bin:$PATH"
+
+# ── 1. Run tests (blocks commit on failure) ──────────────────────────────────
+printf "\\033[1mRunning tests...\\033[0m\\n"
+bun test --cwd "$ROOT"
+if [ $? -ne 0 ]; then
+  printf "\\033[31m\\u2717 Tests failed \\xe2\\x80\\x94 commit aborted.\\033[0m\\n"
+  exit 1
+fi
+printf "\\033[32m\\u2713 All tests passed.\\033[0m\\n"
+
+# ── 2. Auto-update copyright year in LICENSE ─────────────────────────────────
+python3 "$ROOT/scripts/update_license_year.py"
 """
 
 
