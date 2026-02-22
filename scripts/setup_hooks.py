@@ -12,14 +12,18 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HOOKS_DIR = REPO_ROOT / ".git" / "hooks"
 
-# Thin wrapper: delegates CI gate to ci/pre-commit.sh, then runs
-# the license-year updater as a housekeeping step.
+# Thin wrapper: delegates the CI gate to ci/pre-commit.sh, then runs
+# housekeeping steps (license year, README) and stages their output so
+# the updated files are included in the commit automatically.
 PRE_COMMIT_HOOK = """\
 #!/bin/sh
 ROOT="$(git rev-parse --show-toplevel)"
 export PATH="$HOME/.bun/bin:$PATH"
 "$ROOT/ci/pre-commit.sh" || exit 1
 python3 "$ROOT/scripts/update_license_year.py"
+python3 "$ROOT/scripts/update_readme.py"
+python3 "$ROOT/scripts/update_changelog.py"
+git add "$ROOT/LICENSE" "$ROOT/README.md" "$ROOT/CHANGELOG.md"
 """
 
 

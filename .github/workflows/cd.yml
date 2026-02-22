@@ -43,12 +43,35 @@ jobs:
           NEW=$(python3 scripts/bump_version.py ${{ steps.bump-type.outputs.type }})
           echo "version=$NEW" >> "$GITHUB_OUTPUT"
 
+      - name: Stamp CHANGELOG and reset [Unreleased]
+        run: |
+          python3 - <<'PYEOF'
+          from datetime import date
+          from pathlib import Path
+
+          version = "${{ steps.version.outputs.version }}"
+          today = date.today().isoformat()
+          path = Path("CHANGELOG.md")
+          text = path.read_text()
+
+          # Replace the first [Unreleased] header with:
+          #   ## [Unreleased]          <- empty, ready for next cycle
+          #
+          #   ## [vX.Y.Z] - YYYY-MM-DD  <- stamped release
+          stamped = text.replace(
+              "## [Unreleased]",
+              f"## [Unreleased]\n\n## [{version}] - {today}",
+              1,
+          )
+          path.write_text(stamped)
+          PYEOF
+
       - name: Commit version bump & tag
         run: |
           git config user.name "github-actions[bot]"
           git config user.email \
             "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json
+          git add package.json CHANGELOG.md
           git commit \
             -m "chore: release v${{ steps.version.outputs.version }} [skip ci]"
           git tag -a "v${{ steps.version.outputs.version }}" \
