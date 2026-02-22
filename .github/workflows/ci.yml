@@ -24,8 +24,5 @@ jobs:
       - name: Run tests
         run: bun test
 
-      - name: Type check (api)
-        run: bun run --filter @solcard/api lint
-
-      - name: Type check (web)
-        run: bun run --filter @solcard/web lint
+      - name: Type check
+        run: bun run lint

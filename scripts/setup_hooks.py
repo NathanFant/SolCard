@@ -12,21 +12,13 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HOOKS_DIR = REPO_ROOT / ".git" / "hooks"
 
+# Thin wrapper: delegates CI gate to ci/pre-commit.sh, then runs
+# the license-year updater as a housekeeping step.
 PRE_COMMIT_HOOK = """\
 #!/bin/sh
 ROOT="$(git rev-parse --show-toplevel)"
 export PATH="$HOME/.bun/bin:$PATH"
-
-# ── 1. Run tests (blocks commit on failure) ──────────────────────────────────
-printf "\\033[1mRunning tests...\\033[0m\\n"
-bun test --cwd "$ROOT"
-if [ $? -ne 0 ]; then
-  printf "\\033[31m\\u2717 Tests failed \\xe2\\x80\\x94 commit aborted.\\033[0m\\n"
-  exit 1
-fi
-printf "\\033[32m\\u2713 All tests passed.\\033[0m\\n"
-
-# ── 2. Auto-update copyright year in LICENSE ─────────────────────────────────
+"$ROOT/ci/pre-commit.sh" || exit 1
 python3 "$ROOT/scripts/update_license_year.py"
 """
 
@@ -34,7 +26,12 @@ python3 "$ROOT/scripts/update_license_year.py"
 def install_hook(name: str, content: str) -> None:
     hook_path = HOOKS_DIR / name
     hook_path.write_text(content)
-    hook_path.chmod(hook_path.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+    hook_path.chmod(
+        hook_path.stat().st_mode
+        | stat.S_IEXEC
+        | stat.S_IXGRP
+        | stat.S_IXOTH
+    )
     print(f"  installed {hook_path.relative_to(REPO_ROOT)}")
 
 
