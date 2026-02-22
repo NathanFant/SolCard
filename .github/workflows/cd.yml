@@ -1,0 +1,66 @@
+name: CD — Version Bump & Tag
+
+# Triggers whenever a PR is merged into main (both dev→main and fix→main).
+# The dev→main merge is always performed manually by a human reviewer;
+# this workflow only handles the automated bookkeeping that follows.
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  bump-version:
+    # Only run when a PR is actually merged (not just closed/declined)
+    if: github.event.pull_request.merged == true
+    name: Bump Version, Tag & Sync dev
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          # Requires branch protection to allow github-actions[bot] to
+          # bypass the direct-push restriction — see CONTRIBUTING.md.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0   # full history needed for the dev sync merge
+
+      - name: Determine bump type
+        id: bump-type
+        run: |
+          SOURCE="${{ github.event.pull_request.head.ref }}"
+          if [ "$SOURCE" = "dev" ]; then
+            echo "type=proud" >> "$GITHUB_OUTPUT"
+          else
+            echo "type=small" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bump version in package.json
+        id: version
+        run: |
+          NEW=$(python3 scripts/bump_version.py ${{ steps.bump-type.outputs.type }})
+          echo "version=$NEW" >> "$GITHUB_OUTPUT"
+
+      - name: Commit version bump & tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          git commit \
+            -m "chore: release v${{ steps.version.outputs.version }} [skip ci]"
+          git tag -a "v${{ steps.version.outputs.version }}" \
+            -m "Release ${{ steps.version.outputs.version }}"
+          git push origin main --follow-tags
+
+      - name: Sync main → dev
+        # Keep dev perpetually ahead of main — main must never have
+        # commits that are not also in dev.
+        run: |
+          git fetch origin dev
+          git checkout dev
+          git merge --no-ff origin/main \
+            -m "chore: sync main into dev after v${{ steps.version.outputs.version }} [skip ci]"
+          git push origin dev
