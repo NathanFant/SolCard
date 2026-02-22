@@ -1,0 +1,12 @@
+{
+  "name": "solcard",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "dev": "bun run --filter '*' dev",
+    "build": "bun run --filter '*' build",
+    "lint": "bun run --filter '*' lint",
+    "setup": "python3 scripts/setup_hooks.py"
+  }
+}
