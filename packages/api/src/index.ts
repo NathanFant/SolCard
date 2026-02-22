@@ -5,6 +5,21 @@ import health from "./routes/health.js";
 import wallet from "./routes/wallet.js";
 import webhooks from "./routes/webhooks.js";
 
+// Validate required environment variables at startup (only in production)
+// In test/dev, the routes use fallback values
+const isProduction = process.env.NODE_ENV === "production";
+const requiredEnvVars = ["MARQETA_WEBHOOK_SECRET"];
+
+if (isProduction) {
+  for (const envVar of requiredEnvVars) {
+    if (!process.env[envVar]) {
+      throw new Error(
+        `Required environment variable ${envVar} is not set. Please check your .env file and configuration.`
+      );
+    }
+  }
+}
+
 const app = new Hono();
 const PORT = Number(process.env.PORT ?? 3001);
 
