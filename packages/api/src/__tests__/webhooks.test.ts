@@ -3,7 +3,8 @@ import { _resetForTesting } from "../lib/escrow.js";
 import webhooks from "../routes/webhooks.js";
 import type { JitFundingRequest, JitFundingResponse } from "../types/index.js";
 
-const SECRET = process.env.MARQETA_WEBHOOK_SECRET || "";
+// Use the environment secret if available, otherwise use a test default
+const SECRET = process.env.MARQETA_WEBHOOK_SECRET || "test_webhook_secret_key";
 
 /**
  * Helper to compute a valid HMAC-SHA256 signature for a given payload.

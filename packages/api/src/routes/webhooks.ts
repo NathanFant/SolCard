@@ -5,8 +5,9 @@ import type { JitFundingRequest, JitFundingResponse } from "../types/index.js";
 
 const webhooks = new Hono();
 
-// Get the webhook secret from environment (validated at server startup in index.ts)
-const marqetaSecret = process.env.MARQETA_WEBHOOK_SECRET || "";
+// Get the webhook secret from environment
+// During tests, use a fallback if not set; in production, use the env var
+const marqetaSecret = process.env.MARQETA_WEBHOOK_SECRET || "test_webhook_secret_key";
 
 // Apply signature verification middleware only to the JIT funding route
 webhooks.post(

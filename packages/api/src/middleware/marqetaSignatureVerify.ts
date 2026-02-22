@@ -32,6 +32,15 @@ function hexToBytes(hex: string): Uint8Array {
 }
 
 /**
+ * Convert Uint8Array to hex string.
+ */
+function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+/**
  * Timing-safe comparison of two byte arrays.
  * Returns true only if both arrays are the same length and all bytes match.
  */
@@ -86,21 +95,22 @@ export function marqetaSignatureVerify(
       return c.json({ error: "Unauthorized" }, 401);
     }
 
-    // Compute HMAC-SHA256
+    // Compute HMAC-SHA256 using Web Crypto API
     let computed: string;
     try {
+      // Import the secret as a raw key for HMAC
+      const secretBytes = new TextEncoder().encode(secret);
       const key = await crypto.subtle.importKey(
         "raw",
-        new TextEncoder().encode(secret),
+        secretBytes,
         { name: "HMAC", hash: "SHA-256" },
         false,
         ["sign"]
       );
 
-      const signature_bytes = await crypto.subtle.sign("HMAC", key, bodyBuffer);
-      computed = Array.from(new Uint8Array(signature_bytes))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
+      // Sign the body buffer
+      const signatureBuffer = await crypto.subtle.sign("HMAC", key, bodyBuffer);
+      computed = bytesToHex(new Uint8Array(signatureBuffer));
     } catch (err) {
       console.error("[marqeta-verify] Failed to compute HMAC", err);
       return c.json({ error: "Unauthorized" }, 401);
