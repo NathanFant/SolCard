@@ -55,6 +55,7 @@ solcard/
 ├── scripts/
 │   ├── setup_hooks.py          # Installs git pre-commit hook
 │   ├── bump_version.py         # Manual version bump utility
+│   ├── update_changelog.py     # Changelog tooling
 │   ├── update_license_year.py  # Auto-updates LICENSE year on commit
 │   └── update_readme.py        # README tooling
 ├── docs/
@@ -69,6 +70,7 @@ solcard/
 ├── .env.example
 ├── tsconfig.base.json
 ├── CONTRIBUTING.md
+├── CHANGELOG.md
 └── package.json
 ```
 
@@ -219,7 +221,7 @@ Called by Marqeta when a card is swiped. Must respond within ~5 seconds. Debits 
 
 ## Escrow (Current State)
 
-The escrow module (`packages/api/src/lib/escrow.ts`) is an in-memory stub with a fixed starting balance of `$10,000 USD`. It exposes three operations:
+The escrow module (`packages/api/src/lib/escrow.ts`) is an in-memory stub with a fixed starting balance of `$10,000 USD`. It exposes four operations:
 
 | Function | Description |
 | --- | --- |
