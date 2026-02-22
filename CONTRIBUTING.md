@@ -12,8 +12,9 @@ python3 scripts/setup_hooks.py   # installs pre-commit hook
 cp .env.example .env             # fill in your credentials
 ```
 
-The pre-commit hook runs the full test suite and type check before every
-commit. A failing commit is aborted — fix the issue and try again.
+The pre-commit hook runs a **type check only** before every commit —
+tests run exclusively in GitHub Actions CI. A failing type check aborts
+the commit.
 
 ---
 
@@ -88,8 +89,8 @@ and syncs the result into `dev`. For this to work, branch protection on
 
 - [ ] Branch name follows the convention above
 - [ ] Target branch is correct (`dev` for features, `main` for hotfixes)
-- [ ] `bun test` passes locally (pre-commit hook enforces this)
 - [ ] `bun run lint` passes locally (pre-commit hook enforces this)
+- [ ] CI passes in GitHub Actions (tests run there, not locally)
 - [ ] Snapshot files updated if the JIT response shape changed (`bun test --update-snapshots`)
 - [ ] PR description explains _why_, not just _what_
 - [ ] After merging a `fix/*` into `main`, verify the CD workflow synced `main` → `dev`
