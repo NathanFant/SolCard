@@ -5,6 +5,8 @@ Entries are short — one line per logical change.
 
 ## [Unreleased]
 
+## [2026.2.0] - 2026-02-22
+
 - Add `scripts/update_changelog.py` to auto-generate changelog entries via Claude API
 - Add CD workflow step to auto-update `CHANGELOG.md` on every commit
 - Update `scripts/setup_hooks.py` to support changelog automation hook
