@@ -5,6 +5,8 @@ Entries are short — one line per logical change.
 
 ## [Unreleased]
 
+## [2026.3.0] - 2026-02-22
+
 - Update `CONTRIBUTING.md` to revise branching/workflow documentation
 - Update `ci/pre-commit.sh` to simplify pre-commit gate script
 
