@@ -5,6 +5,9 @@ Entries are short — one line per logical change.
 
 ## [Unreleased]
 
+- Update `CONTRIBUTING.md` to revise branching/workflow documentation
+- Update `ci/pre-commit.sh` to simplify pre-commit gate script
+
 ## [2026.2.0] - 2026-02-22
 
 - Add `scripts/update_changelog.py` to auto-generate changelog entries via Claude API

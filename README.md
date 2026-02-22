@@ -92,7 +92,7 @@ cd SolCard
 # Install all workspace dependencies
 bun install
 
-# Install git hooks (runs tests + lint before every commit; auto-updates LICENSE year)
+# Install git hooks (runs a type check before every commit; auto-updates LICENSE year)
 python3 scripts/setup_hooks.py
 
 # Copy env and fill in values
@@ -139,7 +139,7 @@ bun test --update-snapshots
 bun run lint
 ```
 
-Tests live in `src/__tests__/` inside each package and follow the `*.test.ts` / `*.test.tsx` naming convention. The pre-commit hook runs the full test suite and type check before every commit — a failing commit is aborted.
+Tests live in `src/__tests__/` inside each package and follow the `*.test.ts` / `*.test.tsx` naming convention. The pre-commit hook runs a type check before every commit — a failing type check aborts the commit. The full test suite runs in GitHub Actions CI on every push.
 
 ## API Endpoints
 
