@@ -20,6 +20,7 @@ See [docs/card-flow.md](docs/card-flow.md) for the full sequence diagram and [do
 | Frontend | React + Vite + Tailwind CSS | Wallet dashboard |
 | Blockchain | `@solana/web3.js` | SOL balance + stake account queries |
 | DEX Swaps | Jupiter Aggregator API | SOL → USDC conversion (planned) |
+| Price Oracle | Pyth Network (on-chain) | SOL/USD feed with confidence interval; rolling 1s cache |
 | Card Issuing | Marqeta | JIT funding webhook receiver; full integration planned |
 | Database | PostgreSQL | Escrow ledger (planned; in-memory stub currently) |
 | Queue | Redis + BullMQ | Background swap jobs (planned) |
@@ -164,7 +165,7 @@ Returns the current API status and server timestamp.
 
 ### `GET /wallet/:address`
 
-Queries the Solana RPC for native SOL balance and active stake account balances. USD value is calculated using a hardcoded SOL/USD price (`$150`); fetching a live price from the Jupiter price API is planned.
+Queries the Solana RPC for native SOL balance and active stake account balances. USD value is calculated using a hardcoded SOL/USD price (`$150`); production will use the Pyth Network on-chain SOL/USD feed (see pricing model below).
 
 **Response**
 
@@ -218,6 +219,33 @@ Called by Marqeta when a card is swiped. Must respond within ~5 seconds. Debits 
   }
 }
 ```
+
+## SOL/USD Pricing Model
+
+SOL/USD price is sourced from the **Pyth Network** on-chain feed — a single `getAccountInfo` call on the Pyth SOL/USD account, using the same RPC connection already established for wallet queries. Pyth aggregates prices from 90+ institutional market makers and provides a **confidence interval** alongside the mid-market price.
+
+### Rolling Cache
+
+Price is **not** fetched per transaction (too much latency on the JIT hot path) and is **not** fetched lazily on first transaction after an idle period (cold-cache spike under burst load). Instead, a background interval refreshes the cache every second unconditionally:
+
+```
+every 1s → fetch Pyth SOL/USD → update { price, confidence, fetchedAt }
+every JIT transaction → read cached price (no async work on hot path)
+```
+
+This keeps the price always warm at ~86,400 RPC calls/day — negligible on any paid RPC tier.
+
+### Spread Formula
+
+```
+effective_rate = pyth_price × (1 - spread_bps / 10_000)
+
+spread_bps = base_bps + volatility_premium_bps
+  base_bps            = ~30–50 bps  (covers Jupiter swap slippage + gas)
+  volatility_premium  = (pyth_confidence / pyth_price) × 10_000 bps
+```
+
+The spread widens automatically when Pyth's confidence interval is wide (high volatility), narrowing margin risk on the pending Jupiter swap. If the cache age exceeds a hard limit (e.g. 60 seconds — indicating a broken RPC connection), the transaction is declined rather than priced on stale data.
 
 ## Escrow (Current State)
 
