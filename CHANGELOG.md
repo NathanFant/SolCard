@@ -5,6 +5,13 @@ Entries are short — one line per logical change.
 
 ## [Unreleased]
 
+- Add `CLAUDE.md` with project context and development guidelines
+- Add `packages/api/src/lib/price.ts` for SOL/USD price feed integration
+- Add shared TypeScript types to `packages/api/src/types/index.ts`
+- Update escrow ledger to support multi-currency and improved error handling
+- Update JIT funding webhook to integrate live price conversion logic
+- Update escrow and webhook tests with expanded coverage and edge cases
+
 ## [2026.3.0] - 2026-02-22
 
 - Update `CONTRIBUTING.md` to revise branching/workflow documentation
